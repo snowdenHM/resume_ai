@@ -25,7 +25,6 @@ from app.models.resume import Resume, ResumeExport, ProcessingStatus
 from app.models.template import ResumeTemplate
 from app.models.user import User
 from app.schemas.resume import ResumeExportRequest, ResumeExportResponse
-from app.workers.tasks import generate_resume_export
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +108,8 @@ class ExportService:
             
             session.add(export_record)
             await session.flush()
+
+            from app.workers.celery_app import generate_resume_export
             
             # Queue export generation
             generate_resume_export.delay(str(export_record.id))
@@ -448,6 +449,8 @@ class ExportService:
                 export_records.append(export_record)
             
             await session.flush()
+
+            from app.workers.celery_app import generate_resume_export
             
             # Queue export generation for each
             for export_record in export_records:

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models.resume import ResumeStatus, ResumeType, ProcessingStatus
 
@@ -38,8 +38,8 @@ class ResumeOptimizationRequest(BaseModel):
     
     job_description_id: uuid.UUID = Field(..., description="Target job description ID")
     optimization_type: str = Field(
-        "full", 
-        regex="^(full|keywords|format|content)$",
+        "full",
+        pattern="^(full|keywords|format|content)$",
         description="Type of optimization"
     )
 
@@ -63,7 +63,7 @@ class ResumeSectionResponse(ResumeSectionBase):
     resume_id: uuid.UUID = Field(..., description="Resume ID")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
-    
+
     class Config:
         from_attributes = True
 
@@ -97,7 +97,7 @@ class ResumeAnalysisResponse(ResumeAnalysisBase):
     ai_model_used: Optional[str] = Field(None, description="AI model used")
     error_message: Optional[str] = Field(None, description="Error message if failed")
     created_at: datetime = Field(..., description="Analysis timestamp")
-    
+
     class Config:
         from_attributes = True
 
@@ -112,39 +112,25 @@ class ResumeResponse(ResumeBase):
     resume_type: ResumeType = Field(..., description="Resume type")
     version: str = Field(..., description="Resume version")
     parent_resume_id: Optional[uuid.UUID] = Field(None, description="Parent resume ID")
-    
-    # File information
     original_filename: Optional[str] = Field(None, description="Original filename")
     file_path: Optional[str] = Field(None, description="File storage path")
     file_size: Optional[int] = Field(None, description="File size in bytes")
     file_type: Optional[str] = Field(None, description="File MIME type")
-    
-    # Content
     word_count: Optional[int] = Field(None, description="Word count")
     page_count: Optional[int] = Field(None, description="Page count")
     language: str = Field("en", description="Resume language")
-    
-    # Analysis results
     analysis_score: Optional[float] = Field(None, ge=0, le=100, description="Latest analysis score")
     ats_score: Optional[float] = Field(None, ge=0, le=100, description="Latest ATS score")
     last_analyzed_at: Optional[datetime] = Field(None, description="Last analysis timestamp")
-    
-    # Metadata
     skills: Optional[List[str]] = Field(None, description="Extracted skills")
     keywords: Optional[List[str]] = Field(None, description="Extracted keywords")
     structured_data: Optional[Dict[str, Any]] = Field(None, description="Structured resume data")
-    
-    # Template
     template_id: Optional[uuid.UUID] = Field(None, description="Applied template ID")
-    
-    # Timestamps
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
-    
-    # Relationships (optional, loaded based on context)
     sections: Optional[List[ResumeSectionResponse]] = Field(None, description="Resume sections")
     analyses: Optional[List[ResumeAnalysisResponse]] = Field(None, description="Recent analyses")
-    
+
     class Config:
         from_attributes = True
 
@@ -178,13 +164,12 @@ class ResumeStatsResponse(BaseModel):
     max_resumes_allowed: int = Field(..., description="Maximum resumes allowed")
 
 
-# Export schemas
 class ResumeExportRequest(BaseModel):
     """Schema for resume export request."""
     
     export_format: str = Field(
         ...,
-        regex="^(pdf|docx|json|html)$",
+        pattern="^(pdf|docx|json|html)$",
         description="Export format"
     )
     template_id: Optional[uuid.UUID] = Field(None, description="Template to use for export")
@@ -204,12 +189,23 @@ class ResumeExportResponse(BaseModel):
     processing_time: Optional[float] = Field(None, description="Processing time")
     error_message: Optional[str] = Field(None, description="Error message if failed")
     created_at: datetime = Field(..., description="Export creation time")
+
+    class Config:
+        from_attributes = True
+
+class ResumeExportListResponse(BaseModel):
+    """Schema for paginated resume export list response."""
+    
+    exports: List[ResumeExportResponse] = Field(..., description="List of resume exports")
+    total_count: int = Field(..., description="Total number of exports")
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Page size")
+    total_pages: int = Field(..., description="Total number of pages")
     
     class Config:
         from_attributes = True
 
 
-# Search and filter schemas
 class ResumeSearchRequest(BaseModel):
     """Schema for resume search request."""
     
@@ -225,24 +221,24 @@ class ResumeSearchRequest(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(20, ge=1, le=100, description="Page size")
     sort_by: str = Field("updated_at", description="Sort field")
-    sort_order: str = Field("desc", regex="^(asc|desc)$", description="Sort order")
-    
-    @validator("max_score")
-    def validate_score_range(cls, v, values):
-        min_score = values.get("min_score")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$", description="Sort order")
+
+    @field_validator("max_score")
+    @classmethod
+    def validate_score_range(cls, v, info):
+        min_score = info.data.get("min_score")
         if min_score is not None and v is not None and v < min_score:
             raise ValueError("max_score must be greater than or equal to min_score")
         return v
 
 
-# Bulk operation schemas
 class BulkResumeAnalysisRequest(BaseModel):
     """Schema for bulk resume analysis request."""
     
     resume_ids: List[uuid.UUID] = Field(..., min_items=1, max_items=10, description="Resume IDs to analyze")
     analysis_type: str = Field(
         "general",
-        regex="^(general|ats_check)$",
+        pattern="^(general|ats_check)$",
         description="Type of analysis"
     )
 
@@ -257,7 +253,6 @@ class BulkResumeAnalysisResponse(BaseModel):
     estimated_completion: Optional[datetime] = Field(None, description="Estimated completion time")
 
 
-# Version management schemas
 class ResumeVersionResponse(BaseModel):
     """Schema for resume version information."""
     
@@ -268,7 +263,7 @@ class ResumeVersionResponse(BaseModel):
     parent_resume_id: Optional[uuid.UUID] = Field(None, description="Parent resume ID")
     analysis_score: Optional[float] = Field(None, description="Analysis score")
     created_at: datetime = Field(..., description="Creation timestamp")
-    
+
     class Config:
         from_attributes = True
 
@@ -280,7 +275,6 @@ class ResumeVersionListResponse(BaseModel):
     total_count: int = Field(..., description="Total version count")
 
 
-# AI-specific schemas
 class ResumeAIInsights(BaseModel):
     """Schema for AI-generated insights."""
     
@@ -299,7 +293,7 @@ class ResumeComparisonRequest(BaseModel):
     resume_id_2: uuid.UUID = Field(..., description="Second resume ID")
     comparison_type: str = Field(
         "comprehensive",
-        regex="^(comprehensive|scores_only|content_only)$",
+        pattern="^(comprehensive|scores_only|content_only)$",
         description="Type of comparison"
     )
 
@@ -312,6 +306,7 @@ class ResumeComparisonResponse(BaseModel):
     score_comparison: Dict[str, Any] = Field(..., description="Score comparison")
     content_differences: Optional[Dict[str, Any]] = Field(None, description="Content differences")
     recommendations: List[str] = Field(..., description="Comparison-based recommendations")
+
 
 
 # Export all schemas

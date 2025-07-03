@@ -4,7 +4,7 @@ Main API router that combines all v1 endpoints.
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, resumes, users, job_descriptions, templates, export, analysis
+from app.api.v1 import auth, resumes, user, job_description, templates, export, analysis
 
 # Create main API router
 api_router = APIRouter()
@@ -12,8 +12,8 @@ api_router = APIRouter()
 # Include all route modules
 api_router.include_router(auth.router)
 api_router.include_router(resumes.router)
-api_router.include_router(users.router)
-api_router.include_router(job_descriptions.router)
+api_router.include_router(user.router)
+api_router.include_router(job_description.router)
 api_router.include_router(templates.router)
 api_router.include_router(export.router)
 api_router.include_router(analysis.router)

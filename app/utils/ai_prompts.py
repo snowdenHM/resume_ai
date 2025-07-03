@@ -1,476 +1,459 @@
 """
-AI prompt templates for various resume analysis and optimization tasks.
+AI prompt templates for resume analysis, optimization, and job matching.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, List, Optional, Any
 
 
 class PromptTemplates:
-    """Collection of AI prompt templates for resume processing."""
+    """Collection of AI prompt templates for various resume operations."""
     
     # System prompts for different AI roles
-    SYSTEM_ANALYST = """You are an expert resume analyst and career coach with 15+ years of experience in recruitment and talent acquisition. You specialize in:
-- ATS (Applicant Tracking System) optimization
-- Resume content analysis and scoring
-- Keyword optimization for job matching
-- Professional formatting assessment
-- Industry-specific resume requirements
-
-Provide detailed, actionable feedback with specific scores and recommendations. Always respond with structured JSON when possible."""
-
-    SYSTEM_OPTIMIZER = """You are a professional resume writer and optimization expert. Your role is to:
-- Rewrite and improve resume content for maximum impact
-- Optimize resumes for specific job descriptions
-- Enhance keyword density while maintaining readability
-- Improve formatting and structure for ATS compatibility
-- Tailor content to match job requirements
-
-Focus on creating compelling, professional content that highlights achievements and matches job requirements."""
-
-    SYSTEM_EXTRACTOR = """You are a job description analysis expert specializing in:
-- Extracting key requirements from job postings
-- Identifying required vs. preferred qualifications
-- Parsing skills, experience, and education requirements
-- Analyzing job responsibilities and expectations
-- Extracting important keywords and phrases
-
-Always provide structured, organized output in JSON format when possible."""
-
-    SYSTEM_MATCHER = """You are a resume-job matching specialist with expertise in:
-- Calculating compatibility scores between resumes and job descriptions
-- Identifying skill gaps and matches
-- Analyzing experience relevance
-- Keyword matching and optimization
-- Providing specific improvement recommendations
-
-Provide detailed matching analysis with numerical scores and actionable insights."""
-
-    SYSTEM_WRITER = """You are a professional content writer specializing in resume summaries and professional statements. You excel at:
-- Creating compelling professional summaries
-- Writing achievement-focused content
-- Adapting tone for different industries and roles
-- Highlighting unique value propositions
-- Optimizing content for both humans and ATS systems
-
-Write engaging, professional content that stands out to recruiters."""
-
+    SYSTEM_ANALYST = """You are an expert resume analyst with years of experience in HR and recruitment. 
+    Your task is to analyze resumes and provide detailed, actionable feedback. Focus on:
+    - Content quality and relevance
+    - ATS (Applicant Tracking System) compatibility
+    - Professional presentation
+    - Keyword optimization
+    - Industry-specific requirements
+    
+    Always provide specific, constructive recommendations for improvement."""
+    
+    SYSTEM_OPTIMIZER = """You are a professional resume writer and career coach specializing in resume optimization.
+    Your task is to improve resumes to better match job requirements while maintaining authenticity.
+    Focus on:
+    - Enhancing content without changing facts
+    - Improving keyword density for ATS systems
+    - Strengthening action verbs and quantifiable achievements
+    - Optimizing format and structure
+    - Tailoring content for specific roles
+    
+    Maintain the candidate's voice and ensure all information remains truthful."""
+    
+    SYSTEM_EXTRACTOR = """You are a job description analysis expert. Your task is to extract and structure 
+    key information from job postings. Focus on:
+    - Required and preferred skills
+    - Experience requirements
+    - Education requirements
+    - Key responsibilities
+    - Important keywords for ATS matching
+    - Company culture indicators
+    
+    Provide structured, categorized output that can be used for resume matching."""
+    
+    SYSTEM_MATCHER = """You are an expert at matching candidates to job opportunities. Your task is to 
+    analyze the compatibility between resumes and job descriptions. Focus on:
+    - Skills alignment
+    - Experience relevance
+    - Education match
+    - Keyword compatibility
+    - Cultural fit indicators
+    - Gap analysis
+    
+    Provide detailed scoring and specific recommendations for improvement."""
+    
+    SYSTEM_WRITER = """You are a professional resume writer specializing in compelling summary statements.
+    Your task is to create engaging, targeted resume summaries that:
+    - Highlight key strengths and achievements
+    - Include relevant keywords
+    - Match the target role requirements
+    - Maintain professional tone
+    - Are concise and impactful (2-4 sentences)
+    
+    Focus on value proposition and unique selling points."""
+    
     def get_analysis_prompt(
-        self,
-        resume_text: str,
+        self, 
+        resume_text: str, 
         job_description: Optional[str] = None,
         analysis_type: str = "general"
     ) -> str:
-        """Generate resume analysis prompt."""
+        """Generate analysis prompt based on type and context."""
         
         base_prompt = f"""
-Analyze the following resume and provide a comprehensive assessment:
-
-RESUME CONTENT:
-{resume_text}
-
-"""
+        Please analyze the following resume and provide detailed feedback.
+        
+        RESUME TEXT:
+        {resume_text}
+        
+        """
         
         if job_description:
             base_prompt += f"""
-TARGET JOB DESCRIPTION:
-{job_description}
-
-"""
+        TARGET JOB DESCRIPTION:
+        {job_description}
         
-        if analysis_type == "general":
-            analysis_instructions = """
-Please provide a detailed analysis including:
-
-1. OVERALL ASSESSMENT (0-100 score)
-   - Overall resume quality and effectiveness
-   - Professional presentation and formatting
-   - Content relevance and impact
-
-2. ATS COMPATIBILITY (0-100 score)
-   - Keyword optimization
-   - Format compatibility with ATS systems
-   - Section organization and headers
-
-3. CONTENT QUALITY (0-100 score)
-   - Achievement focus vs. responsibility listing
-   - Quantifiable results and metrics
-   - Professional language and tone
-
-4. FORMATTING & STRUCTURE (0-100 score)
-   - Visual appeal and readability
-   - Proper use of white space
-   - Consistent formatting
-
-5. STRENGTHS
-   - List 3-5 key strengths of the resume
-
-6. AREAS FOR IMPROVEMENT
-   - List 3-5 specific areas that need improvement
-
-7. RECOMMENDATIONS
-   - Provide 5-8 actionable recommendations for improvement
-
-8. SKILLS EXTRACTION
-   - List all technical and soft skills found in the resume
-
-Please format your response as JSON with the following structure:
-{
-    "overall_score": 85,
-    "ats_score": 78,
-    "content_score": 90,
-    "format_score": 82,
-    "strengths": ["strength1", "strength2", ...],
-    "weaknesses": ["weakness1", "weakness2", ...],
-    "recommendations": ["recommendation1", "recommendation2", ...],
-    "extracted_skills": ["skill1", "skill2", ...],
-    "summary": "Brief overall assessment"
-}
-"""
+        Please provide targeted analysis comparing the resume against this specific job posting.
+        """
         
+        if analysis_type == "ats_check":
+            specific_instructions = """
+        Focus specifically on ATS (Applicant Tracking System) compatibility:
+        - Keyword density and relevance
+        - Format and structure compatibility
+        - Section organization
+        - File format considerations
+        - Common ATS parsing issues
+        
+        Provide an ATS score (0-100) and specific recommendations for improvement.
+        """
         elif analysis_type == "job_match":
-            analysis_instructions = """
-Analyze how well this resume matches the target job description:
-
-1. OVERALL MATCH (0-100 score)
-   - How well the resume aligns with job requirements
-
-2. SKILLS MATCH (0-100 score)
-   - Technical and soft skills alignment
-   - Required vs. preferred skills coverage
-
-3. EXPERIENCE MATCH (0-100 score)
-   - Relevant work experience
-   - Industry and role alignment
-   - Years of experience match
-
-4. KEYWORD OPTIMIZATION (0-100 score)
-   - Presence of important job keywords
-   - Industry-specific terminology
-
-5. MISSING ELEMENTS
-   - Skills not mentioned in resume but required for job
-   - Keywords that should be added
-   - Experience gaps
-
-6. IMPROVEMENT RECOMMENDATIONS
-   - Specific suggestions to improve job match
-
-Format as JSON with match scores and detailed analysis.
-"""
+            specific_instructions = """
+        Focus on job match analysis:
+        - Skills alignment with job requirements
+        - Experience relevance and level
+        - Education match
+        - Keyword compatibility
+        - Missing qualifications
+        - Competitive strengths
         
-        elif analysis_type == "ats_check":
-            analysis_instructions = """
-Focus specifically on ATS (Applicant Tracking System) compatibility:
-
-1. FORMAT COMPATIBILITY
-   - File format suitability
-   - Header and section recognition
-   - Font and formatting issues
-
-2. KEYWORD OPTIMIZATION
-   - Relevant keyword density
-   - Proper use of industry terminology
-   - Job-specific keyword inclusion
-
-3. STRUCTURE ANALYSIS
-   - Standard section headers
-   - Chronological organization
-   - Contact information placement
-
-4. COMMON ATS ISSUES
-   - Graphics or images that may cause problems
-   - Complex formatting that ATS can't parse
-   - Missing essential sections
-
-Provide specific ATS optimization recommendations.
-"""
+        Provide match scores for different categories and overall compatibility.
+        """
+        else:  # general analysis
+            specific_instructions = """
+        Provide comprehensive resume analysis covering:
+        1. Overall Quality Score (0-100)
+        2. ATS Compatibility Score (0-100)
+        3. Content Quality Score (0-100)
+        4. Keyword Optimization Score (0-100)
+        5. Format Score (0-100)
         
-        return base_prompt + analysis_instructions
-
+        For each area, provide:
+        - Specific strengths identified
+        - Areas for improvement
+        - Actionable recommendations
+        - Missing keywords or skills
+        - Industry-specific suggestions
+        """
+        
+        base_prompt += specific_instructions
+        
+        base_prompt += """
+        
+        Please structure your response as JSON with the following format:
+        {
+            "overall_score": 85,
+            "ats_score": 80,
+            "content_score": 90,
+            "keyword_score": 75,
+            "format_score": 85,
+            "strengths": ["List of specific strengths"],
+            "weaknesses": ["List of areas for improvement"],
+            "recommendations": ["List of actionable recommendations"],
+            "missing_keywords": ["List of important missing keywords"],
+            "extracted_skills": ["List of skills found in resume"],
+            "industry_alignment": "Assessment of industry fit",
+            "experience_assessment": "Analysis of experience level and relevance"
+        }
+        """
+        
+        return base_prompt
+    
     def get_optimization_prompt(
         self,
         resume_text: str,
         job_description: str,
         optimization_type: str = "full"
     ) -> str:
-        """Generate resume optimization prompt."""
+        """Generate optimization prompt for resume improvement."""
+        
+        base_prompt = f"""
+        Please optimize the following resume for the target job description.
+        
+        ORIGINAL RESUME:
+        {resume_text}
+        
+        TARGET JOB DESCRIPTION:
+        {job_description}
+        
+        """
+        
+        if optimization_type == "keywords":
+            specific_instructions = """
+        Focus specifically on keyword optimization:
+        - Identify important keywords from the job description
+        - Naturally integrate missing keywords into existing content
+        - Improve keyword density without keyword stuffing
+        - Maintain readability and authenticity
+        - Prioritize high-impact keywords
+        """
+        elif optimization_type == "format":
+            specific_instructions = """
+        Focus on format and structure optimization:
+        - Improve section organization and hierarchy
+        - Enhance readability and visual appeal
+        - Optimize for ATS parsing
+        - Improve bullet point structure
+        - Strengthen action verbs and quantifiable achievements
+        """
+        elif optimization_type == "content":
+            specific_instructions = """
+        Focus on content enhancement:
+        - Strengthen achievement statements
+        - Add quantifiable results where possible
+        - Improve relevance to target role
+        - Enhance professional language
+        - Remove or minimize less relevant information
+        """
+        else:  # full optimization
+            specific_instructions = """
+        Perform comprehensive optimization including:
+        1. Content enhancement and relevance improvement
+        2. Keyword integration and optimization
+        3. Format and structure improvements
+        4. ATS compatibility enhancements
+        5. Professional language strengthening
+        
+        Ensure all changes:
+        - Maintain factual accuracy
+        - Preserve the candidate's authentic voice
+        - Improve job match potential
+        - Enhance ATS parsing capability
+        - Strengthen overall presentation
+        """
+        
+        base_prompt += specific_instructions
+        
+        base_prompt += """
+        
+        Please provide:
+        1. The complete optimized resume text
+        2. A summary of changes made
+        3. List of keywords added or enhanced
+        4. Sections that were modified
+        5. Additional suggestions for further improvement
+        
+        Structure your response as JSON:
+        {
+            "optimized_content": "Complete optimized resume text",
+            "improvements_made": ["List of improvements"],
+            "keywords_added": ["List of keywords integrated"],
+            "sections_modified": ["List of sections changed"],
+            "suggestions": ["Additional recommendations"]
+        }
+        """
+        
+        return base_prompt
+    
+    def get_extraction_prompt(self, job_description: str) -> str:
+        """Generate prompt for extracting structured data from job descriptions."""
         
         prompt = f"""
-Optimize the following resume for the target job description:
-
-ORIGINAL RESUME:
-{resume_text}
-
-TARGET JOB DESCRIPTION:
-{job_description}
-
-"""
+        Please analyze the following job description and extract structured information.
         
-        if optimization_type == "full":
-            optimization_instructions = """
-Please provide a comprehensive optimization including:
-
-1. REWRITTEN RESUME CONTENT
-   - Optimize for the target job description
-   - Improve keyword density naturally
-   - Enhance achievement statements with metrics
-   - Improve professional language and impact
-
-2. KEY IMPROVEMENTS MADE
-   - List specific changes and enhancements
-   - Explain why each change improves the resume
-
-3. KEYWORD INTEGRATION
-   - Show which keywords were added
-   - Explain keyword placement strategy
-
-4. SECTION ENHANCEMENTS
-   - Detail improvements to each section
-   - Highlight new achievements or better formatting
-
-5. ATS OPTIMIZATION
-   - Ensure format is ATS-friendly
-   - Use standard section headers
-   - Optimize for keyword scanning
-
-Provide the optimized resume in a clean, professional format suitable for immediate use.
-"""
+        JOB DESCRIPTION:
+        {job_description}
         
-        elif optimization_type == "keywords":
-            optimization_instructions = """
-Focus specifically on keyword optimization:
-
-1. Identify all relevant keywords from the job description
-2. Integrate keywords naturally into the resume content
-3. Improve keyword density without keyword stuffing
-4. Use variations and synonyms of important terms
-5. Ensure keywords appear in appropriate sections
-
-Provide the keyword-optimized version with explanations of changes made.
-"""
+        Extract and categorize the following information:
         
-        elif optimization_type == "format":
-            optimization_instructions = """
-Focus on formatting and structure optimization:
-
-1. Improve overall visual appeal and readability
-2. Ensure ATS-friendly formatting
-3. Optimize section organization
-4. Improve bullet point structure
-5. Enhance professional presentation
-
-Provide the reformatted resume with clean, professional styling.
-"""
+        1. Required Skills (technical and soft skills that are mandatory)
+        2. Preferred Skills (nice-to-have skills)
+        3. Education Requirements (degrees, certifications, etc.)
+        4. Experience Requirements (years, specific experience types)
+        5. Key Responsibilities (main job duties)
+        6. Important Keywords (for ATS matching)
+        7. Industry-specific Terms
+        8. Role-specific Terminology
+        9. Company Culture Indicators
+        10. Seniority Level Assessment
+        11. Job Category Classification
         
-        return prompt + optimization_instructions
-
-    def get_extraction_prompt(self, job_description: str) -> str:
-        """Generate job requirements extraction prompt."""
+        Also provide quality assessment:
+        - Clarity Score (0-100): How clear and well-written is the job description
+        - Completeness Score (0-100): How complete is the information provided
+        - Specificity Score (0-100): How specific are the requirements
         
-        return f"""
-Analyze the following job description and extract structured requirements:
-
-JOB DESCRIPTION:
-{job_description}
-
-Please extract and organize the following information in JSON format:
-
-{{
-    "job_title": "extracted job title",
-    "company": "company name if mentioned",
-    "required_skills": ["skill1", "skill2", ...],
-    "preferred_skills": ["skill1", "skill2", ...],
-    "education_requirements": ["requirement1", "requirement2", ...],
-    "experience_requirements": {{
-        "minimum_years": 3,
-        "preferred_years": 5,
-        "relevant_experience": ["type1", "type2", ...]
-    }},
-    "responsibilities": ["responsibility1", "responsibility2", ...],
-    "qualifications": ["qualification1", "qualification2", ...],
-    "keywords": ["keyword1", "keyword2", ...],
-    "industry": "industry sector",
-    "job_level": "entry/mid/senior/executive",
-    "employment_type": "full-time/part-time/contract",
-    "location": "location if specified",
-    "salary_range": "salary range if mentioned",
-    "benefits": ["benefit1", "benefit2", ...],
-    "company_culture": ["culture1", "culture2", ...],
-    "nice_to_have": ["nice1", "nice2", ...]
-}}
-
-Focus on extracting:
-- Technical skills vs. soft skills
-- Must-have vs. nice-to-have requirements
-- Years of experience needed
-- Education level required
-- Industry-specific terminology
-- Important keywords for ATS optimization
-"""
-
+        Structure your response as JSON:
+        {
+            "required_skills": ["List of mandatory skills"],
+            "preferred_skills": ["List of preferred skills"],
+            "education_requirements": ["List of education requirements"],
+            "experience_requirements": ["List of experience requirements"],
+            "responsibilities": ["List of key responsibilities"],
+            "keywords": ["List of important keywords"],
+            "industry_terms": ["Industry-specific terminology"],
+            "role_terms": ["Role-specific terminology"],
+            "culture_indicators": ["Company culture indicators"],
+            "seniority_level": "Entry/Mid/Senior/Executive",
+            "category": "Job category/function",
+            "clarity_score": 85,
+            "completeness_score": 75,
+            "specificity_score": 80,
+            "suggestions": ["Suggestions for improving job description"],
+            "missing_info": ["Important information that's missing"]
+        }
+        """
+        
+        return prompt
+    
     def get_matching_prompt(self, resume_text: str, job_description: str) -> str:
-        """Generate resume-job matching prompt."""
+        """Generate prompt for matching resume to job description."""
         
-        return f"""
-Calculate the compatibility between this resume and job description:
-
-RESUME:
-{resume_text}
-
-JOB DESCRIPTION:
-{job_description}
-
-Provide a detailed matching analysis in JSON format:
-
-{{
-    "overall_match_score": 85,
-    "breakdown": {{
-        "skills_match_score": 80,
-        "experience_match_score": 90,
-        "education_match_score": 85,
-        "keyword_match_score": 75
-    }},
-    "matched_elements": {{
-        "skills": ["matched skill1", "matched skill2", ...],
-        "keywords": ["matched keyword1", "matched keyword2", ...],
-        "experience": ["relevant experience1", "relevant experience2", ...]
-    }},
-    "missing_elements": {{
-        "skills": ["missing skill1", "missing skill2", ...],
-        "keywords": ["missing keyword1", "missing keyword2", ...],
-        "experience": ["experience gap1", "experience gap2", ...]
-    }},
-    "recommendations": [
-        "Add experience with X technology",
-        "Include more keywords about Y",
-        "Highlight achievements in Z area"
-    ],
-    "match_explanation": "Detailed explanation of the match assessment",
-    "improvement_priority": [
-        "highest priority improvement",
-        "medium priority improvement",
-        "lower priority improvement"
-    ]
-}}
-
-Consider:
-- Technical skills alignment
-- Industry experience relevance
-- Education/certification requirements
-- Leadership and soft skills match
-- Career progression alignment
-- Company culture fit indicators
-"""
-
+        prompt = f"""
+        Please analyze the compatibility between this resume and job description.
+        
+        RESUME:
+        {resume_text}
+        
+        JOB DESCRIPTION:
+        {job_description}
+        
+        Perform detailed matching analysis:
+        
+        1. Overall Match Assessment (0-100 score)
+        2. Skills Match Analysis
+           - Matched skills between resume and job requirements
+           - Missing critical skills
+           - Skill level assessment
+        3. Experience Match Analysis
+           - Relevant experience alignment
+           - Experience level compatibility
+           - Industry experience relevance
+        4. Education Match Analysis
+           - Education requirements vs. candidate qualifications
+           - Certification alignment
+        5. Keyword Match Analysis
+           - Matched keywords for ATS optimization
+           - Missing important keywords
+           - Keyword density assessment
+        
+        Provide specific recommendations for improving match quality.
+        
+        Structure your response as JSON:
+        {
+            "overall_match_score": 78,
+            "skills_match_score": 85,
+            "experience_match_score": 75,
+            "education_match_score": 90,
+            "keyword_match_score": 70,
+            "matched_skills": ["List of matching skills"],
+            "missing_skills": ["List of missing skills"],
+            "matched_keywords": ["List of matching keywords"],
+            "missing_keywords": ["List of missing keywords"],
+            "experience_analysis": "Assessment of experience relevance",
+            "education_analysis": "Assessment of education match",
+            "recommendations": ["Specific recommendations for improvement"],
+            "competitive_strengths": ["Candidate's competitive advantages"],
+            "areas_for_development": ["Skills or experience to develop"],
+            "match_explanation": "Detailed explanation of match assessment"
+        }
+        """
+        
+        return prompt
+    
     def get_summary_prompt(
-        self,
-        resume_data: Dict[str, Any],
+        self, 
+        resume_data: Dict[str, Any], 
         job_description: Optional[str] = None
     ) -> str:
-        """Generate professional summary prompt."""
+        """Generate prompt for creating resume summary/objective."""
+        
+        # Extract key information from resume data
+        experience = resume_data.get("experience", [])
+        skills = resume_data.get("skills", [])
+        education = resume_data.get("education", [])
+        achievements = resume_data.get("achievements", [])
         
         prompt = f"""
-Create a compelling professional summary based on the following resume information:
-
-RESUME DATA:
-- Name: {resume_data.get('name', 'Professional')}
-- Experience: {resume_data.get('years_experience', 'Multiple years')} years
-- Current/Recent Role: {resume_data.get('current_role', 'Professional')}
-- Industry: {resume_data.get('industry', 'Various industries')}
-- Key Skills: {', '.join(resume_data.get('skills', []))}
-- Notable Achievements: {', '.join(resume_data.get('achievements', []))}
-- Education: {resume_data.get('education', 'Relevant education')}
-
-"""
+        Create a compelling professional summary for a resume based on the following information:
+        
+        CANDIDATE INFORMATION:
+        Experience: {experience}
+        Skills: {skills}
+        Education: {education}
+        Key Achievements: {achievements}
+        """
         
         if job_description:
             prompt += f"""
-TARGET JOB DESCRIPTION:
-{job_description}
-
-Create a summary that specifically targets this role and highlights relevant qualifications.
-"""
+        
+        TARGET JOB DESCRIPTION:
+        {job_description}
+        
+        Tailor the summary to align with this specific role and highlight relevant qualifications.
+        """
         
         prompt += """
-Write a professional summary that:
-1. Is 3-4 sentences long (50-80 words)
-2. Starts with years of experience and current role
-3. Highlights 2-3 key skills or areas of expertise
-4. Includes 1-2 notable achievements or value propositions
-5. Uses strong action words and professional language
-6. Is tailored to the target role (if job description provided)
-7. Avoids clichés and generic statements
-
-The summary should immediately capture a recruiter's attention and make them want to read more.
-
-Example format:
-"Experienced [Role] with [X] years of expertise in [skill/industry]. Proven track record of [achievement] and [achievement]. Specialized in [skill] and [skill] with demonstrated ability to [value proposition]. Seeking to leverage [relevant experience] to drive [relevant outcome] at [target role/company type]."
-
-Return only the professional summary text, no additional formatting or explanation.
-"""
+        
+        Create a professional summary that:
+        1. Is 2-4 sentences long
+        2. Highlights the candidate's strongest qualifications
+        3. Includes relevant keywords for ATS optimization
+        4. Demonstrates value proposition
+        5. Matches the target role requirements (if provided)
+        6. Uses strong action-oriented language
+        7. Quantifies achievements where possible
+        
+        Focus on the candidate's unique selling points and competitive advantages.
+        
+        Return only the summary text without additional formatting or explanations.
+        """
+        
+        return prompt
+    
+    def get_skills_extraction_prompt(self, resume_text: str) -> str:
+        """Generate prompt for extracting skills from resume text."""
+        
+        prompt = f"""
+        Extract all skills mentioned in the following resume text and categorize them.
+        
+        RESUME TEXT:
+        {resume_text}
+        
+        Categorize skills into:
+        1. Technical Skills (programming languages, software, tools, technologies)
+        2. Soft Skills (communication, leadership, problem-solving, etc.)
+        3. Industry Skills (domain-specific knowledge and expertise)
+        4. Certifications (professional certifications and licenses)
+        5. Languages (spoken/written languages and proficiency levels)
+        
+        Structure your response as JSON:
+        {
+            "technical_skills": ["List of technical skills"],
+            "soft_skills": ["List of soft skills"],
+            "industry_skills": ["List of industry-specific skills"],
+            "certifications": ["List of certifications"],
+            "languages": ["List of languages with proficiency"],
+            "all_skills": ["Complete list of all identified skills"]
+        }
+        """
+        
+        return prompt
+    
+    def get_achievement_enhancement_prompt(self, achievements: List[str]) -> str:
+        """Generate prompt for enhancing achievement statements."""
+        
+        achievements_text = "\n".join([f"- {achievement}" for achievement in achievements])
+        
+        prompt = f"""
+        Enhance the following achievement statements to make them more impactful and quantifiable:
+        
+        CURRENT ACHIEVEMENTS:
+        {achievements_text}
+        
+        For each achievement, improve by:
+        1. Adding quantifiable metrics where possible
+        2. Using strong action verbs
+        3. Highlighting business impact
+        4. Making statements more specific and concrete
+        5. Ensuring professional language
+        
+        Guidelines:
+        - Use numbers, percentages, dollar amounts when possible
+        - Start with strong action verbs (achieved, increased, reduced, etc.)
+        - Focus on business value and impact
+        - Keep statements concise but impactful
+        - Maintain truthfulness (don't add false metrics)
+        
+        Return the enhanced achievements as a JSON list:
+        {
+            "enhanced_achievements": ["List of improved achievement statements"],
+            "improvement_notes": ["Explanation of improvements made"]
+        }
+        """
         
         return prompt
 
-    def get_bullet_point_optimization_prompt(self, bullet_points: list, job_keywords: list) -> str:
-        """Generate prompt for optimizing resume bullet points."""
-        
-        return f"""
-Optimize these resume bullet points for maximum impact:
 
-ORIGINAL BULLET POINTS:
-{chr(10).join(['• ' + point for point in bullet_points])}
-
-TARGET KEYWORDS TO INCORPORATE:
-{', '.join(job_keywords)}
-
-Rewrite each bullet point to:
-1. Start with strong action verbs
-2. Include quantifiable results/metrics where possible
-3. Naturally incorporate relevant keywords
-4. Focus on achievements rather than just responsibilities
-5. Use professional, impactful language
-6. Keep each point concise but comprehensive
-
-Guidelines:
-- Use past tense for previous roles, present tense for current role
-- Include numbers, percentages, dollar amounts when possible
-- Show progression and growth
-- Highlight leadership and initiative
-- Demonstrate problem-solving abilities
-
-Return the optimized bullet points in the same format, one per line with bullet symbols.
-"""
-
-    def get_skills_optimization_prompt(self, current_skills: list, job_skills: list) -> str:
-        """Generate prompt for optimizing skills section."""
-        
-        return f"""
-Optimize this skills section for the target job:
-
-CURRENT SKILLS:
-{', '.join(current_skills)}
-
-REQUIRED JOB SKILLS:
-{', '.join(job_skills)}
-
-Create an optimized skills section that:
-1. Prioritizes skills mentioned in the job description
-2. Groups related skills logically
-3. Uses consistent terminology with the job posting
-4. Removes outdated or irrelevant skills
-5. Adds missing critical skills (if the candidate likely has them)
-6. Orders skills by relevance to the target role
-
-Organize skills into categories like:
-- Technical Skills
-- Programming Languages
-- Software/Tools
-- Soft Skills
-- Certifications
-
-Return the organized skills list with category headers.
-"""
-
-
-# Export the class
+# Export the prompt templates
 __all__ = ["PromptTemplates"]

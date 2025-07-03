@@ -20,7 +20,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 # Import your models and configuration
 from app.config import settings
 from app.database import Base
-from app.models import *  # Import all models
+from app.models import job_description, resume, template, user
 
 # this is the Alembic Config object
 config = context.config

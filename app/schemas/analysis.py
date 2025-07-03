@@ -31,7 +31,7 @@ class AnalysisRequest(BaseModel):
     job_description_id: Optional[uuid.UUID] = Field(None, description="Job description for targeted analysis")
     analysis_type: str = Field(
         "comprehensive",
-        regex="^(comprehensive|quick|ats|content|keywords)$",
+        pattern="^(comprehensive|quick|ats|content|keywords)$",
         description="Type of analysis"
     )
     include_suggestions: bool = Field(True, description="Include improvement suggestions")
@@ -43,11 +43,11 @@ class BatchAnalysisRequest(BaseModel):
     resume_ids: List[uuid.UUID] = Field(..., min_items=1, max_items=10, description="Resume IDs to analyze")
     analysis_type: str = Field(
         "general",
-        regex="^(general|quick|ats)$",
+        pattern="^(general|quick|ats)$",
         description="Type of analysis"
     )
     job_description_id: Optional[uuid.UUID] = Field(None, description="Job description for targeted analysis")
-    priority: str = Field("normal", regex="^(normal|high)$", description="Analysis priority")
+    priority: str = Field("normal", pattern="^(normal|high)$", description="Analysis priority")
 
 
 class AnalysisReportRequest(BaseModel):
@@ -56,12 +56,12 @@ class AnalysisReportRequest(BaseModel):
     resume_ids: List[uuid.UUID] = Field(..., min_items=1, max_items=20, description="Resumes to include")
     report_type: str = Field(
         "individual",
-        regex="^(individual|comparative|portfolio)$",
+        pattern="^(individual|comparative|portfolio)$",
         description="Type of report"
     )
     include_trends: bool = Field(True, description="Include trend analysis")
     include_recommendations: bool = Field(True, description="Include recommendations")
-    format: str = Field("pdf", regex="^(pdf|html|json)$", description="Report format")
+    format: str = Field("pdf", pattern="^(pdf|html|json)$", description="Report format")
     time_period: Optional[str] = Field("3months", description="Time period for trends")
 
 
@@ -292,7 +292,7 @@ class AnalysisSearchRequest(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(20, ge=1, le=100, description="Page size")
     sort_by: str = Field("created_at", description="Sort field")
-    sort_order: str = Field("desc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$", description="Sort order")
 
 
 # Export all schemas

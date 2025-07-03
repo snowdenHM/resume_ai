@@ -24,13 +24,14 @@ from app.schemas.user import (
     UserAdminUpdate, UserListResponse, UserSearchRequest, UserStatsResponse
 )
 from app.services.user_service import UserService
+from app.services.email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["User Management"])
 
 # Initialize service
-user_service = UserService()
+user_service = UserService(EmailService)
 
 
 @router.get(

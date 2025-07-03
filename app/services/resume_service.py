@@ -26,7 +26,7 @@ from app.models.user import User
 from app.models.job_description import JobDescription, JobMatch
 from app.services.file_service import FileService
 from app.services.ai_service import AIService
-from app.workers.tasks import analyze_resume_task, optimize_resume_task
+from app.workers.celery_app import analyze_resume_task, optimize_resume_task
 
 logger = logging.getLogger(__name__)
 

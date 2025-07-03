@@ -67,17 +67,17 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized successfully")
         
         # Initialize Sentry for error tracking
-        if settings.SENTRY_DSN:
-            sentry_sdk.init(
-                dsn=settings.SENTRY_DSN,
-                integrations=[
-                    FastApiIntegration(auto_enabling=True),
-                    SqlalchemyIntegration()
-                ],
-                traces_sample_rate=0.1,
-                environment="production" if not settings.DEBUG else "development"
-            )
-            logger.info("Sentry initialized")
+        # if settings.SENTRY_DSN:
+        #     sentry_sdk.init(
+        #         dsn=settings.SENTRY_DSN,
+        #         integrations=[
+        #             FastApiIntegration(auto_enabling=True),
+        #             SqlalchemyIntegration()
+        #         ],
+        #         traces_sample_rate=0.1,
+        #         environment="production" if not settings.DEBUG else "development"
+        #     )
+        #     logger.info("Sentry initialized")
         
         logger.info("Application startup completed")
         

@@ -26,7 +26,7 @@ from app.schemas.analysis import (
     BatchAnalysisResponse, AnalysisReportRequest, AnalysisReportResponse
 )
 from app.services.ai_service import AIService
-from app.workers.tasks import analyze_resume_task, bulk_resume_analysis
+from app.workers.celery_app import analyze_resume_task, bulk_resume_analysis
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 
-from pydantic import BaseModel, EmailStr, Field, validator, root_validator
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator
+)
 
 from app.models.user import UserRole, UserStatus, SubscriptionType
 
@@ -14,7 +20,7 @@ from app.models.user import UserRole, UserStatus, SubscriptionType
 # Base schemas
 class UserBase(BaseModel):
     """Base user schema with common fields."""
-    
+
     email: EmailStr = Field(..., description="User email address")
     first_name: Optional[str] = Field(None, max_length=100, description="First name")
     last_name: Optional[str] = Field(None, max_length=100, description="Last name")
@@ -25,17 +31,18 @@ class UserBase(BaseModel):
     experience_years: Optional[int] = Field(None, ge=0, le=50, description="Years of experience")
     timezone: str = Field("UTC", max_length=50, description="User timezone")
     language: str = Field("en", max_length=10, description="Preferred language")
-    
-    @validator("phone_number")
+
+    @field_validator("phone_number")
+    @classmethod
     def validate_phone_number(cls, v):
         if v:
-            # Remove all non-digit characters for validation
             digits_only = ''.join(filter(str.isdigit, v))
             if len(digits_only) < 10:
                 raise ValueError("Phone number must have at least 10 digits")
         return v
-    
-    @validator("industry")
+
+    @field_validator("industry")
+    @classmethod
     def validate_industry(cls, v):
         if v:
             valid_industries = [
@@ -50,44 +57,35 @@ class UserBase(BaseModel):
 
 # Request schemas
 class UserCreate(UserBase):
-    """Schema for user creation."""
-    
-    password: str = Field(
-        ..., 
-        min_length=8, 
-        max_length=128,
-        description="User password (min 8 characters)"
-    )
+    password: str = Field(..., min_length=8, max_length=128, description="User password (min 8 characters)")
     username: Optional[str] = Field(
-        None, 
-        min_length=3, 
+        None,
+        min_length=3,
         max_length=50,
-        regex=r"^[a-zA-Z0-9_]+$",
+        pattern=r"^[a-zA-Z0-9_]+$",
         description="Username (alphanumeric and underscore only)"
     )
     email_notifications: bool = Field(True, description="Enable email notifications")
     marketing_emails: bool = Field(False, description="Enable marketing emails")
-    
-    @validator("password")
+
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
-        """Validate password strength."""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
-        
+
         has_upper = any(c.isupper() for c in v)
         has_lower = any(c.islower() for c in v)
         has_digit = any(c.isdigit() for c in v)
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
-        
+
         if not (has_upper and has_lower and has_digit):
             raise ValueError("Password must contain uppercase, lowercase, and digit")
-        
+
         return v
 
 
 class UserUpdate(BaseModel):
-    """Schema for user updates."""
-    
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     phone_number: Optional[str] = Field(None, max_length=20)
@@ -103,81 +101,49 @@ class UserUpdate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    """Schema for user login."""
-    
     email: EmailStr = Field(..., description="User email")
     password: str = Field(..., min_length=1, description="User password")
     remember_me: bool = Field(False, description="Remember login")
 
 
 class PasswordChange(BaseModel):
-    """Schema for password change."""
-    
     current_password: str = Field(..., description="Current password")
-    new_password: str = Field(
-        ..., 
-        min_length=8, 
-        max_length=128,
-        description="New password"
-    )
+    new_password: str = Field(..., min_length=8, max_length=128, description="New password")
     confirm_password: str = Field(..., description="Confirm new password")
-    
-    @root_validator
-    def validate_passwords_match(cls, values):
-        new_password = values.get("new_password")
-        confirm_password = values.get("confirm_password")
-        
-        if new_password and confirm_password and new_password != confirm_password:
+
+    @model_validator(mode="after")
+    def validate_passwords_match(self) -> "PasswordChange":
+        if self.new_password != self.confirm_password:
             raise ValueError("New passwords do not match")
-        
-        return values
+        return self
 
 
 class PasswordReset(BaseModel):
-    """Schema for password reset request."""
-    
     email: EmailStr = Field(..., description="User email")
 
 
 class PasswordResetConfirm(BaseModel):
-    """Schema for password reset confirmation."""
-    
     token: str = Field(..., description="Reset token")
-    new_password: str = Field(
-        ..., 
-        min_length=8, 
-        max_length=128,
-        description="New password"
-    )
+    new_password: str = Field(..., min_length=8, max_length=128, description="New password")
     confirm_password: str = Field(..., description="Confirm new password")
-    
-    @root_validator
-    def validate_passwords_match(cls, values):
-        new_password = values.get("new_password")
-        confirm_password = values.get("confirm_password")
-        
-        if new_password and confirm_password and new_password != confirm_password:
+
+    @model_validator(mode="after")
+    def validate_passwords_match(self) -> "PasswordResetConfirm":
+        if self.new_password != self.confirm_password:
             raise ValueError("Passwords do not match")
-        
-        return values
+        return self
 
 
 class EmailVerification(BaseModel):
-    """Schema for email verification."""
-    
     token: str = Field(..., description="Verification token")
 
 
 class RefreshToken(BaseModel):
-    """Schema for token refresh."""
-    
     refresh_token: str = Field(..., description="Refresh token")
 
 
 # Response schemas
 class UserResponse(UserBase):
-    """Schema for user response."""
-    
     id: uuid.UUID = Field(..., description="User ID")
     username: Optional[str] = Field(None, description="Username")
     role: UserRole = Field(..., description="User role")
@@ -195,64 +161,51 @@ class UserResponse(UserBase):
     preferences: Optional[Dict[str, Any]] = Field(None, description="User preferences")
     created_at: datetime = Field(..., description="Account creation time")
     updated_at: datetime = Field(..., description="Last update time")
-    
+
     class Config:
         from_attributes = True
 
 
 class UserPublicResponse(BaseModel):
-    """Schema for public user response (limited fields)."""
-    
     id: uuid.UUID = Field(..., description="User ID")
     username: Optional[str] = Field(None, description="Username")
     first_name: Optional[str] = Field(None, description="First name")
     last_name: Optional[str] = Field(None, description="Last name")
     profile_picture_url: Optional[str] = Field(None, description="Profile picture URL")
-    
+
     class Config:
         from_attributes = True
 
 
 class UserStatsResponse(BaseModel):
-    """Schema for user statistics response."""
-    
     resume_count: int = Field(..., description="Number of resumes")
     job_applications_count: int = Field(..., description="Number of job applications")
     analyses_count: int = Field(..., description="Number of analyses performed")
     last_activity: Optional[datetime] = Field(None, description="Last activity")
     subscription_days_remaining: Optional[int] = Field(None, description="Days until subscription expires")
-    
+
     class Config:
         from_attributes = True
 
 
 class TokenResponse(BaseModel):
-    """Schema for authentication token response."""
-    
     access_token: str = Field(..., description="JWT access token")
-    refresh_token: str = Field(..., description="JWT refresh token") 
+    refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field("bearer", description="Token type")
     expires_in: int = Field(..., description="Token expiration in seconds")
     user: UserResponse = Field(..., description="User information")
 
 
 class LoginResponse(TokenResponse):
-    """Schema for login response."""
-    
     message: str = Field("Login successful", description="Success message")
     is_first_login: bool = Field(False, description="Is this the first login")
 
 
 class LogoutResponse(BaseModel):
-    """Schema for logout response."""
-    
     message: str = Field("Logout successful", description="Success message")
 
 
-# User session schemas
 class UserSessionResponse(BaseModel):
-    """Schema for user session response."""
-    
     id: uuid.UUID = Field(..., description="Session ID")
     is_active: bool = Field(..., description="Session active status")
     expires_at: datetime = Field(..., description="Session expiration")
@@ -260,22 +213,17 @@ class UserSessionResponse(BaseModel):
     user_agent: Optional[str] = Field(None, description="Client user agent")
     device_info: Optional[Dict[str, Any]] = Field(None, description="Device information")
     created_at: datetime = Field(..., description="Session creation time")
-    
+
     class Config:
         from_attributes = True
 
 
 class UserSessionListResponse(BaseModel):
-    """Schema for user session list response."""
-    
     sessions: List[UserSessionResponse] = Field(..., description="Active sessions")
     total_count: int = Field(..., description="Total session count")
 
 
-# User preferences schemas
 class UserPreferencesUpdate(BaseModel):
-    """Schema for updating user preferences."""
-    
     theme: Optional[str] = Field(None, description="UI theme preference")
     default_template_id: Optional[uuid.UUID] = Field(None, description="Default resume template")
     auto_save: Optional[bool] = Field(None, description="Auto-save enabled")
@@ -286,8 +234,6 @@ class UserPreferencesUpdate(BaseModel):
 
 
 class UserPreferencesResponse(BaseModel):
-    """Schema for user preferences response."""
-    
     theme: str = Field("light", description="UI theme")
     default_template_id: Optional[uuid.UUID] = Field(None, description="Default template")
     auto_save: bool = Field(True, description="Auto-save enabled")
@@ -295,15 +241,12 @@ class UserPreferencesResponse(BaseModel):
     email_frequency: str = Field("weekly", description="Email frequency")
     export_format: str = Field("pdf", description="Default export format")
     privacy_level: str = Field("standard", description="Privacy level")
-    
+
     class Config:
         from_attributes = True
 
 
-# Admin schemas
 class UserAdminUpdate(BaseModel):
-    """Schema for admin user updates."""
-    
     role: Optional[UserRole] = Field(None, description="User role")
     status: Optional[UserStatus] = Field(None, description="Account status")
     subscription_type: Optional[SubscriptionType] = Field(None, description="Subscription type")
@@ -313,8 +256,6 @@ class UserAdminUpdate(BaseModel):
 
 
 class UserListResponse(BaseModel):
-    """Schema for user list response."""
-    
     users: List[UserResponse] = Field(..., description="List of users")
     total_count: int = Field(..., description="Total user count")
     page: int = Field(..., description="Current page")
@@ -322,10 +263,7 @@ class UserListResponse(BaseModel):
     total_pages: int = Field(..., description="Total pages")
 
 
-# Search and filter schemas
 class UserSearchRequest(BaseModel):
-    """Schema for user search request."""
-    
     query: Optional[str] = Field(None, description="Search query")
     role: Optional[UserRole] = Field(None, description="Filter by role")
     status: Optional[UserStatus] = Field(None, description="Filter by status")
@@ -336,7 +274,8 @@ class UserSearchRequest(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(20, ge=1, le=100, description="Page size")
     sort_by: str = Field("created_at", description="Sort field")
-    sort_order: str = Field("desc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$", description="Sort order")
+
 
 
 # Export all schemas

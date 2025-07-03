@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl, EmailStr, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, EmailStr, PostgresDsn, field_validator, ValidationInfo
 
 class Settings(BaseSettings):
     """ Application Settings """
@@ -31,13 +31,14 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
-    @field_validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v:Union[str, List[str]]) -> Union[List[str], str]:
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
             return v
         raise ValueError(v)
+
 
     # Database
     POSTGRES_SERVER:str
@@ -45,20 +46,26 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: str = "5432"
-    DATABASE_URL: Optional[PostgresDsn] = None
+    DATABASE_URL: Optional[str] = None
 
-    @field_validator("DATABASE_URL", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str], info: ValidationInfo) -> str:
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            port=values.get("POSTGRES_PORT"),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
+
+        user = info.data["POSTGRES_USER"]
+        password = info.data["POSTGRES_PASSWORD"]
+        host = info.data.get("POSTGRES_SERVER", "localhost")
+        port = info.data.get("POSTGRES_PORT", "5432")
+        db = info.data["POSTGRES_DB"]
+
+        # Ensure proper URL encoding of special characters in password
+        from urllib.parse import quote_plus
+        password = quote_plus(password)
+
+        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
@@ -134,6 +141,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"
 
 class DevelopmentSettings(Settings):
     """Development environment settings."""

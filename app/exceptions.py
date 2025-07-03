@@ -373,6 +373,25 @@ class SubscriptionExpiredException(CustomHTTPException):
         )
 
 
+class PermissionDeniedException(CustomHTTPException):
+    """
+    Exception raised when a user doesn't have permission to perform an action.
+    
+    This exception is used for authorization failures, such as:
+    - Non-admin users trying to access admin-only endpoints
+    - Users trying to access resources they don't own
+    - Premium features accessed by free users
+    - Insufficient role permissions
+    """
+    
+    def __init__(self):
+        super().__init__(
+            status_code=400,
+            detail="Permission denied. Please contact to Admin",
+            error_code="PERMISSION_DENIED"
+        )
+
+
 # Utility functions for exception handling
 def create_validation_error(field: str, message: str) -> Dict[str, Any]:
     """Create a validation error dictionary."""

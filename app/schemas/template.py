@@ -281,7 +281,7 @@ class TemplateSearchRequest(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(20, ge=1, le=100, description="Page size")
     sort_by: str = Field("rating_average", description="Sort field")
-    sort_order: str = Field("desc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$", description="Sort order")
 
 
 # Section configuration schemas
